@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { ElContainer, ElHeader, ElAside, ElMain, ElFooter, ElScrollbar, ElMenu, ElSubMenu, ElMenuItem, ElMenuItemGroup, ElIcon, ElRow, ElCol, ElButton, ElCard, ElMessage } from 'element-plus'
+import { ElContainer, ElHeader, ElAside, ElMain, ElFooter, ElScrollbar, ElMenu, ElSubMenu, ElMenuItem, ElMenuItemGroup, ElIcon, ElRow, ElCol, ElButton, ElCard, ElMessage, ElInput } from 'element-plus'
 import {
   Message,     // 消息图标
   Menu as IconMenu, // 菜单图标(重命名避免冲突)
