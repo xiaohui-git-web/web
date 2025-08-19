@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { ElContainer, ElHeader, ElAside, ElMain, ElFooter, ElScrollbar, ElMenu, ElSubMenu, ElMenuItem, ElMenuItemGroup, ElIcon, ElRow, ElCol, ElButton, ElCard, ElMessage, ElInput } from 'element-plus'
+import { ElContainer, ElHeader, ElAside, ElMain, ElFooter, ElScrollbar, ElMenu, ElSubMenu, ElMenuItem, ElMenuItemGroup, ElIcon, ElRow, ElCol, ElButton, ElCard, ElMessage } from 'element-plus'
 import {
   Message,     // 消息图标
   Menu as IconMenu, // 菜单图标(重命名避免冲突)
@@ -77,31 +77,44 @@ const cards = ref([
 const searchQuery = ref('')
 const searchResults = ref([])
 const isSearching = ref(false)
+const showSearchResults = ref(false)
 
 const handleSearch = async () => {
-  if (!searchQuery.value.trim()) {
-    searchResults.value = []
-    return
-  }
+    console.log('搜索请求触发，搜索词:', searchQuery.value)
+    // 显示搜索结果区域
+    showSearchResults.value = true
+    if (!searchQuery.value.trim()) {
+      searchResults.value = []
+      return
+    }
 
-  isSearching.value = true
-  try {
-    // 调用后端搜索API
-    const response = await fetch(`http://localhost:5000/search?q=${encodeURIComponent(searchQuery.value)}`)
-    const data = await response.json()
-    searchResults.value = data.results
-  } catch (error) {
-    console.error('搜索失败:', error)
-    ElMessage.error('搜索失败，请稍后重试')
-  } finally {
-    isSearching.value = false
+    const query = searchQuery.value.trim()
+
+    isSearching.value = true
+    try {
+      // 调用后端搜索API
+      const encodedQuery = encodeURIComponent(query)
+      console.log('编码后的搜索词:', encodedQuery)
+      const response = await fetch(`http://localhost:5000/search?q=${encodedQuery}`)
+      console.log('响应状态:', response.status)
+      const data = await response.json()
+      console.log('搜索结果:', data)
+      searchResults.value = data.results
+    } catch (error) {
+      console.error('搜索失败:', error)
+      ElMessage.error('搜索失败，请稍后重试')
+    } finally {
+      isSearching.value = false
+    }
   }
-}
 
 // 统一跳转处理方法
-const handleCardClick = (url) => {
-  window.open(url, '_blank', 'noopener,noreferrer')
-}
+  const handleCardClick = (url) => {
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
+
+  // 已移除添加新条目功能相关代码
+
 const handleMenuClick = (url) => {
   window.open(url, '_blank', 'noopener,noreferrer')
 }
@@ -130,20 +143,21 @@ const scrollToGroup = (groupId) => {
   <el-container style="height: 100vh" class="main-container">
     <el-header style="background:rgb(127, 179, 231); color: white" class="custom-header">
       <div style="display: flex; justify-content: space-between; align-items: center; width: 100%">
-        <h1>自用导航页面</h1>
+        <h1 @click="showSearchResults=false" style="cursor: pointer;">自用导航页面</h1>
         <div class="search-container">
           <el-input
             v-model="searchQuery"
             placeholder="搜索..."
             prefix-icon="Search"
             @icon-click="handleSearch"
+            @keydown.enter.native="handleSearch"
             style="width: 200px;"/>
         </div>
       </div>
     </el-header>
     <el-container class="content-wrapper">
       <!-- 搜索结果区域 -->
-      <div v-if="searchResults.length > 0" class="search-results">
+      <div class="search-results" v-if="showSearchResults">
         <el-card>
           <template #header>
             <div class="card-header">
@@ -151,13 +165,21 @@ const scrollToGroup = (groupId) => {
             </div>
           </template>
           <div class="search-result-list">
-            <div v-for="result in searchResults" :key="result.id" class="search-result-item" @click="handleCardClick(result.link)">
-              <img :src="result.icon" alt="{{ result.title }}" class="result-icon">
-              <div class="result-info">
-                <h3 class="result-title">{{ result.title }}</h3>
-                <p class="result-group">{{ result.group }}</p>
-                <p class="result-link">{{ result.link }}</p>
+            <div v-if="searchResults.length > 0">
+              <div v-for="result in searchResults" :key="result.id" class="search-result-item" @click="handleCardClick(result.link)">
+                <img :src="result.icon" alt="{{ result.title }}" class="result-icon">
+                <div class="result-info">
+                  <h3 class="result-title">{{ result.title }}</h3>
+                  <p class="result-group">{{ result.group }}</p>
+                  <p class="result-link">{{ result.link }}</p>
+                </div>
               </div>
+            </div>
+            <div v-else-if="isSearching">
+              <p class="search-loading">搜索中...</p>
+            </div>
+            <div v-else>
+              <p class="search-empty">暂无搜索结果</p>
             </div>
           </div>
         </el-card>
@@ -166,6 +188,7 @@ const scrollToGroup = (groupId) => {
       <el-aside width="200px">
         <el-scrollbar>
           <el-menu :default-openeds="['1', '3']">
+            <!-- 自用导航已移除 -->
             <el-sub-menu index="2">
               <template #title>
                 <el-icon><icon-menu /></el-icon>菜单
@@ -211,7 +234,13 @@ const scrollToGroup = (groupId) => {
         </div>
       </el-main>
     </el-container>
-    <el-footer style="background:rgb(59, 62, 70); color: white">Footer</el-footer>
+    <el-footer style="background:rgb(59, 62, 70); color: white; display: flex; flex-direction: column; padding: 10px 20px; border-top: 3px solid rgb(127, 179, 231);">
+      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 10px;">
+        <span>Footer</span>
+      </div>
+    </el-footer>
+
+<!-- 已移除新增条目模态框 -->
   </el-container>
 </template>
 
@@ -275,6 +304,7 @@ const scrollToGroup = (groupId) => {
   display: flex;
   flex: 1;
   overflow: hidden;
+  flex-direction: row;
 }
 
 
@@ -337,6 +367,12 @@ const scrollToGroup = (groupId) => {
 .search-results {
   padding: 16px;
   width: 100%;
+  position: relative;
+  z-index: 10;
+  background-color: white;
+  box-sizing: border-box;
+  display: block !important;
+  margin-bottom: 20px;
 }
 
 .search-result-list {
@@ -386,14 +422,23 @@ const scrollToGroup = (groupId) => {
   margin: 0;
   word-break: break-all;
 }
-</style>
-<style>
+
+.search-loading,
+.search-empty {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+}
+
 /* 全局覆盖element样式 */
 :deep(.el-card__body) {
   padding: 0 !important;
   width: 100%;
   height: 100%;
 }
+
+/* 移除了自定义模态框样式 */
 
 /* 组标题悬停效果 */
 .group-title:hover {
